@@ -1,0 +1,46 @@
+# Packaging of the desktop shell (Tauri). The Rust code itself lives in ../smo_save_editor/backend;
+# this manifest only says how to build it, and where the tests are.
+
+[package]
+name = "smo-save-editor"
+version = "0.1.0"
+description = "Save editor for Super Mario Odyssey"
+edition = "2021"
+autobins = false
+autotests = false
+
+[lib]
+# The `_lib` suffix keeps the library name different from the binary name (needed on Windows).
+name = "smo_save_editor_lib"
+path = "../smo_save_editor/backend/lib.rs"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "smo-save-editor"
+path = "../smo_save_editor/backend/main.rs"
+
+[[test]]
+name = "roundtrip"
+path = "../tests/backend/roundtrip.rs"
+
+[[test]]
+name = "synthetic"
+path = "../tests/backend/synthetic.rs"
+
+[[test]]
+name = "crc32"
+path = "../tests/backend/crc32.rs"
+
+[[test]]
+name = "json_bridge"
+path = "../tests/backend/json_bridge.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+# On Linux, ask the desktop portal for file dialogs so each desktop shows its own native picker.
+tauri-plugin-dialog = { version = "2", default-features = false, features = ["xdg-portal"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

@@ -1,0 +1,8 @@
+# Save files are personal data: never commit them.
+*.bin
+target/
+node_modules/
+dist/
+public/
+__pycache__/
+.claude
