@@ -10,6 +10,7 @@ import { MoonCatalog } from "../../smo_save_editor/app/game_data/moon_catalog/in
 import { ScenarioCatalog } from "../../smo_save_editor/app/game_data/scenario_catalog/index.ts";
 import { StoryCatalog } from "../../smo_save_editor/app/game_data/story_catalog/index.ts";
 import { Worlds } from "../../smo_save_editor/app/game_data/worlds/index.ts";
+import { CutsceneRules } from "../../smo_save_editor/app/rules/cutscene_rules/index.ts";
 import { OdysseyRules } from "../../smo_save_editor/app/rules/odyssey_rules/index.ts";
 import { ProgressPlanner } from "../../smo_save_editor/app/rules/progress_planner/index.ts";
 import type { Context } from "../../smo_save_editor/app/rules/progress_planner/index.ts";
@@ -18,7 +19,7 @@ import { UnlockRules } from "../../smo_save_editor/app/rules/unlock_rules/index.
 
 const worlds = new Worlds();
 const unlockRules = new UnlockRules(worlds);
-const planner = new ProgressPlanner(worlds, unlockRules, new OdysseyRules(worlds), new StoryRules(new ScenarioCatalog(), new StoryCatalog(new MoonCatalog())));
+const planner = new ProgressPlanner(worlds, unlockRules, new OdysseyRules(worlds), new StoryRules(new ScenarioCatalog(), new StoryCatalog(new MoonCatalog())), new CutsceneRules());
 
 /** WorldInfo[i].MainShineNo as a save in the Sand Kingdom has it: 0 for visited kingdoms and for Metro, -1 otherwise. */
 /** `unlocked` for a save where the first `count` kingdoms are open. */
@@ -122,4 +123,28 @@ test("moving past the Cap Kingdom gives Mario his cap back, and a fresh save doe
 
   const moved = new Map(planner.editsFor(unlockRules.unlock(worlds.ids.sand, { num: 1, first: 0, second: 0 }), realContext));
   assert.equal(moved.get("/IsEnableCap"), true);
+});
+
+test("camera cutscenes: not reached means none has played; reached means the intro has, and the starts are left alone", () => {
+  const rules = new CutsceneRules();
+  assert.equal(rules.introPending(-1), true);
+  assert.equal(rules.introPending(0), false);
+  assert.deepEqual(rules.edits(4, -1, 2), [
+    ["/SequenceDemoSkipData/WorldData/4/IsFirstWorldIntroCamera", true],
+    ["/SequenceDemoSkipData/WorldData/4/IsFirstScenarioStartCamera/0", true],
+    ["/SequenceDemoSkipData/WorldData/4/IsFirstScenarioStartCamera/1", true],
+  ]);
+  // a kingdom at scenario 7 may never have played the starts of 3 and 4: only the intro is a rule
+  assert.deepEqual(rules.edits(1, 7, 7), [["/SequenceDemoSkipData/WorldData/1/IsFirstWorldIntroCamera", false]]);
+  assert.deepEqual(rules.arrival(1, 3, 7), [["/SequenceDemoSkipData/WorldData/1/IsFirstScenarioStartCamera/2", false]]);
+  assert.deepEqual(rules.arrival(1, 9, 7), []);
+});
+
+test("unlocking the next kingdom sets its camera cutscenes to 'not played'; without slot counts they are left alone", () => {
+  const next = unlockRules.unlock(worlds.ids.wooded, { num: 3, first: 0, second: 0 });
+  const edits = new Map(planner.editsFor(next, { ...realContext, startSlots: new Array<number>(17).fill(3) }));
+  const newest = 3;   // the kingdom just unlocked, as in the test above
+  assert.equal(edits.get(`/SequenceDemoSkipData/WorldData/${newest}/IsFirstWorldIntroCamera`), true);
+  assert.equal(edits.get(`/SequenceDemoSkipData/WorldData/${newest}/IsFirstScenarioStartCamera/0`), true);
+  assert.equal([...planner.editsFor(next, realContext)].some(([path]) => path.startsWith("/SequenceDemoSkipData")), false);
 });

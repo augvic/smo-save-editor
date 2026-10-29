@@ -3,8 +3,8 @@
 import type { LeaveCatalog, ScenarioCatalog, StoryCatalog } from "../../../game_data/index.ts";
 import { Dom } from "../../../dom/index.ts";
 import type { CoinLedger, ShopLedger } from "../../../ledgers/index.ts";
-import type { StoryRules } from "../../../rules/index.ts";
-import type { WorldInfoEntry } from "../../../save_schema/index.ts";
+import type { CutsceneRules, StoryRules } from "../../../rules/index.ts";
+import type { Edit, WorldInfoEntry } from "../../../save_schema/index.ts";
 import type { SaveStore } from "../../../save_store/index.ts";
 import { CheckField, Layout, NumberField, SelectField } from "../../../widgets/index.ts";
 
@@ -18,8 +18,10 @@ export class KingdomProgressCard {
   private readonly leave: LeaveCatalog;
   private readonly coins: CoinLedger;
   private readonly purse: ShopLedger;
+  private readonly cutscenes: CutsceneRules;
 
-  constructor(store: SaveStore, story: StoryCatalog, scenarios: ScenarioCatalog, rules: StoryRules, leave: LeaveCatalog, coins: CoinLedger, purse: ShopLedger) {
+  constructor(store: SaveStore, story: StoryCatalog, scenarios: ScenarioCatalog, rules: StoryRules, leave: LeaveCatalog, coins: CoinLedger, purse: ShopLedger, cutscenes: CutsceneRules) {
+    this.cutscenes = cutscenes;
     this.coins = coins;
     this.purse = purse;
     this.store = store;
@@ -54,7 +56,11 @@ export class KingdomProgressCard {
     const info = this.store.get<WorldInfoEntry[]>("progress", "/WorldInfo")[world];
     const path = `/GameProgressData/IsFirstTimeWorld/${world}`;
     const pending = info.MainShineNo < 0 || info.UnlockedWorldId < 0;
-    if (this.store.get<boolean>(K, path) !== pending) await this.store.edit(K, [[path, pending]]);
+    const slots = this.store.get<boolean[] | undefined>(K, `/SequenceDemoSkipData/WorldData/${world}/IsFirstScenarioStartCamera`)?.length;
+    // The camera cutscenes follow Main scenario: not reached means none has played, reached means the intro has.
+    const cutscenes = slots === undefined ? [] : this.cutscenes.edits(world, info.MainShineNo, slots);
+    const edits = [[path, pending] as Edit, ...cutscenes].filter(([p, value]) => this.store.get(K, p) !== value);
+    if (edits.length > 0) await this.store.edit(K, edits);
   }
 
   /** Raise Main scenario to what the chosen Current scenario goes with, never lower it. */

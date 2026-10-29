@@ -4,7 +4,7 @@
 import type { GoToKingdom, UnlockState } from "../../actions/index.ts";
 import type { AchievementCatalog, LeaveCatalog, MoonCatalog, ScenarioCatalog, Worlds } from "../../game_data/index.ts";
 import type { CoinLedger, MoonLedger, ShopLedger } from "../../ledgers/index.ts";
-import type { OdysseyRules, UnlockRules } from "../../rules/index.ts";
+import type { CutsceneRules, OdysseyRules, UnlockRules } from "../../rules/index.ts";
 import type { AchievementEntry, Edit, ShineEntry, WorldInfoEntry } from "../../save_schema/index.ts";
 import type { SaveStore } from "../../save_store/index.ts";
 
@@ -40,10 +40,11 @@ export class SaveChecks {
   private readonly achievements: AchievementCatalog;
   private readonly leave: LeaveCatalog;
   private readonly goTo: GoToKingdom;
+  private readonly cutscenes: CutsceneRules;
 
   constructor(parts: {
     store: SaveStore; worlds: Worlds; moons: MoonLedger; moonCatalog: MoonCatalog; scenarios: ScenarioCatalog;
-    odyssey: OdysseyRules; unlockRules: UnlockRules; unlockState: UnlockState; coins: CoinLedger; purse: ShopLedger; achievements: AchievementCatalog; leave: LeaveCatalog; goTo: GoToKingdom;
+    odyssey: OdysseyRules; unlockRules: UnlockRules; unlockState: UnlockState; coins: CoinLedger; purse: ShopLedger; achievements: AchievementCatalog; leave: LeaveCatalog; goTo: GoToKingdom; cutscenes: CutsceneRules;
   }) {
     this.store = parts.store;
     this.worlds = parts.worlds;
@@ -58,6 +59,7 @@ export class SaveChecks {
     this.achievements = parts.achievements;
     this.leave = parts.leave;
     this.goTo = parts.goTo;
+    this.cutscenes = parts.cutscenes;
   }
 
   run(): Issue[] {
@@ -104,6 +106,21 @@ export class SaveChecks {
       // A locked kingdom is reported below, with its own ways out; its flag follows from that.
       if (open.has(world) && pending !== undefined && pending !== shouldBePending) {
         issues.push({ title: `${name(world)}: "First visit still pending" is ${pending ? "on" : "off"}, Main scenario ${info.MainShineNo} means it should be ${shouldBePending ? "on" : "off"}`, kingdom: world, fix: { label: "Match Main scenario", edits: [[`/GameProgressData/IsFirstTimeWorld/${world}`, shouldBePending]] } });
+      }
+
+      // The camera cutscenes follow Main scenario: a kingdom not reached has played none, a reached one has played its intro.
+      // The scenario starts are not checked once it is reached (they play on arrival, not in order). The Cap Kingdom is left out:
+      // a new game starts there with its opening not played yet.
+      const slots = this.store.get<boolean[] | undefined>(K, `/SequenceDemoSkipData/WorldData/${world}/IsFirstScenarioStartCamera`)?.length;
+      if (open.has(world) && world !== this.worlds.ids.cap && slots !== undefined) {
+        const wrong = this.cutscenes.edits(world, info.MainShineNo, slots).filter(([p, value]) => this.store.get(K, p) !== value);
+        if (wrong.length > 0) {
+          issues.push({
+            title: `${name(world)}: ${wrong.length} camera cutscene flag${wrong.length === 1 ? " does" : "s do"} not match Main scenario ${info.MainShineNo}`,
+            kingdom: world,
+            fix: { label: "Match Main scenario", edits: wrong },
+          });
+        }
       }
 
       // Things marked in a kingdom that is still locked: either it should be unlocked, or what is marked there should go.

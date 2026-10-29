@@ -1,0 +1,11 @@
+> 🌳 Part of [Fractal Component Architecture](../../documentation/file.md) — this file materializes the architecture for one language. Read the main document first for the vision and the language-agnostic rules; come here for how it lands in code.
+
+# 16.3 ☕ Java
+
+- **Leaf** → a package folder — even for a single class, even before it has any children — holding one `public class` file named for the folder's own role (`login/Login.java` → `class Login`), never a bare `Login.java` sitting directly beside its siblings in the parent package. The language already *enforces* file name = class name; FCA's addition is that this file always lives in its own same-named folder from birth (§3.1), so nothing has to move package when the component later grows children.
+- **Package** → a folder; Java's package system is directory-based and mandatory, an exact native match for "every component = folder."
+- **Entry point** → Java has no `__init__`-equivalent file. A container branch is simply a package folder holding only its children's folders — nothing extra is needed, since `import com.example.api.routes.registration.Registration;` already reaches a child directly with no aggregator in the way. An active branch is a package that also contains one class named for the package's own role (`api/Api.java` defining `class Api`, alongside `api/routes/` for its children) — the class *is* the entry point, there's just no dedicated file name reserved for that role the way `__init__.py` is.
+- **Abstract dependency** → a Java `interface`, implemented explicitly (`implements`).
+- **Data carrier** → a `record` (Java 16+) is the natural fit; a plain immutable class with a constructor otherwise.
+- **Composition root** → the `main` class or a dedicated bootstrap class, typically at the top package, constructing the tree via constructor injection (with or without a DI framework — the manual/explicit version is what FCA asks for by default).
+- **Strong typing (§5.3)** → Java's own static type system already enforces this by default — the discipline this document adds is refusing the two escape hatches the language still allows: raw `Object` used as a dumping ground instead of a proper `interface` (§8) or generic bound, and raw (non-generic) collection types. Prefer generics and a named `interface` over either.

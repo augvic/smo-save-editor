@@ -35,6 +35,7 @@ export class UnlockState {
       homeStatus: this.store.get<number>("progress", "/GameProgressData/HomeStatus"),
       waterfall: this.store.get<number>("progress", "/GameProgressData/WaterfallWorldProgress"),
       cascadeHasMoon: (this.moons.stats().get(this.worlds.ids.cascade)?.have ?? 0) > 0,
+      startSlots: this.store.get<{ IsFirstScenarioStartCamera: boolean[] }[]>("progress", "/SequenceDemoSkipData/WorldData")?.map((w) => w.IsFirstScenarioStartCamera.length),
       mainScenario: this.store.get<WorldInfoEntry[]>("progress", "/WorldInfo").map((w) => w.MainShineNo),
       scenario: this.store.get<WorldInfoEntry[]>("progress", "/WorldInfo").map((w) => w.ScenarioNo),
       unlocked: this.store.get<WorldInfoEntry[]>("progress", "/WorldInfo").map((w) => w.UnlockedWorldId >= 0),

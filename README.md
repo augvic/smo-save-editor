@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <img alt="Platforms" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey">
+  <img alt="Platforms" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows-lightgrey">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
   <img alt="Built with GitHub Actions" src="https://img.shields.io/badge/builds-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white">
 </p>
@@ -47,6 +47,7 @@ kingdoms, Power Moons, purple coins, shop items, achievements and game settings,
   and "Purple coins spent" is worked out for you. Coins that paid for an item stay locked until you remove the item.
 - 🛍️ **Shop items** with the real prices and conditions (coins, cleared kingdom, Power Moons needed), plus "Add all / Remove all".
 - 🚩 Checkpoints (with the names the map shows), side areas visited, cutscenes still to play, and a completion percentage per kingdom.
+  The camera cutscenes follow Main scenario: a kingdom not reached has none played, and entering it plays its intro. The scenario starts that play in between depend on when Mario arrives, not on the order of the scenarios, so they are left alone.
 - 🚪 What it takes to **leave** a kingdom (the game's own Power Moon requirement) is shown, and the chain stays consistent
   (unlocking a kingdom completes the ones before it).
 - 🧹 **Clear locked coins / Clear locked items:** one click takes back what no one could have collected or bought in a locked kingdom.
@@ -71,9 +72,13 @@ kingdoms, Power Moons, purple coins, shop items, achievements and game settings,
   and ⚙️ **Game settings** (`Common.bin`).
 - 🎨 Line icons, smooth page transitions and fades, with `prefers-reduced-motion` respected.
 
+## 📖 User guide
+
+A guide to every tab and feature is in [`docs/user-guide`](docs/user-guide/README.md): [getting started](docs/user-guide/getting-started.md), [Overview](docs/user-guide/overview.md), [Kingdoms](docs/user-guide/kingdoms.md), [Achievements](docs/user-guide/achievements.md), [Checks and Report](docs/user-guide/checks-and-report.md), [Story flags](docs/user-guide/story-flags.md), [Import and Changes](docs/user-guide/import-and-changes.md), and [Raw data and Game settings](docs/user-guide/raw-data-and-settings.md).
+
 ## 🧱 Layout
 
-The project follows Fractal Component Architecture (FCA): the software is a
+The project follows [Fractal Component Architecture (FCA)](docs/fractal-component-architecture/documentation/file.md): the software is a
 tree of components, and the folders *are* that tree. The repository root is the **development level**
 (how it is built, tested and shipped); the software itself lives in `smo_save_editor/`, with one folder
 per language.
@@ -98,6 +103,12 @@ smo-save-editor/                  ← development level
 └── package.json  tsconfig.json  vite.config.ts  Cargo.toml  FORMAT.md
 ```
 
+📚 The FCA documentation is in this repository, under [`docs/fractal-component-architecture`](docs/fractal-component-architecture):
+the [main guide](docs/fractal-component-architecture/documentation/file.md), and the language guides for the two languages used here,
+[TypeScript](docs/fractal-component-architecture/languages/javascript-typescript/file.md) and
+[Rust](docs/fractal-component-architecture/languages/rust/file.md). It is licensed separately, under
+[CC BY 4.0](docs/fractal-component-architecture/license/LICENSE).
+
 Every component is a folder with an entry point (`index.ts`, or `mod.rs` in Rust) and is named after the
 class or struct it defines. Dependencies are handed in through constructors and wired in one place per
 language: `smo_save_editor/app/index.ts` and `smo_save_editor/backend/lib.rs`.
@@ -119,7 +130,7 @@ npx tsc --noEmit       # type check
 npm run tauri build    # package it (see Build it yourself)
 ```
 
-🧪 Today that is 20 Rust tests and 58 TypeScript tests. The tests in `tests/backend/synthetic.rs` build saves in memory,
+🧪 Today that is 20 Rust tests and 60 TypeScript tests. The tests in `tests/backend/synthetic.rs` build saves in memory,
 so they run for everyone. `roundtrip.rs` additionally checks your own saves: copy `File1.bin` / `Common.bin` into the
 repository root to enable it (they are git-ignored); without them those tests are skipped.
 
@@ -135,13 +146,12 @@ python3 tools/gen_game_data.py /path/to/romfs
 
 ## 🤖 Automated builds
 
-The repository has two [GitHub Actions](https://github.com/features/actions) workflows in `.github/workflows/`:
+The repository has a [GitHub Actions](https://github.com/features/actions) workflow in `.github/workflows/release.yml`.
+When a version tag such as `v0.2.0` is pushed, the app is built on **Linux and Windows** and the installers are attached
+to a release. 📥 You can download them from the [Releases](https://github.com/augvic/smo-save-editor/releases) page, with nothing to install or compile.
+(There is no macOS build; on a Mac, build it yourself as described below.)
 
-- **Tests:** on every push and pull request, a clean Linux machine runs the type check, the TypeScript tests, the Rust tests
-  and the interface build.
-- **Release:** when a version tag such as `v0.1.0` is pushed, the app is built on **Linux and Windows** and the installers are attached
-  to a release. 📥 You can download them from the [Releases](https://github.com/augvic/smo-save-editor/releases) page, with nothing to install or compile.
-  (There is no macOS build; on a Mac, build it yourself as described below.)
+The workflow only builds. The tests are run locally before a release (see *Develop*).
 
 The installers are not signed, so Windows may show a SmartScreen warning the first time you open one.
 

@@ -2,6 +2,7 @@
 
 import type { Worlds } from "../../game_data/index.ts";
 import type { Edit } from "../../save_schema/index.ts";
+import type { CutsceneRules } from "../cutscene_rules/index.ts";
 import type { OdysseyRules } from "../odyssey_rules/index.ts";
 import type { StoryRules } from "../story_rules/index.ts";
 import type { Unlock, UnlockRules } from "../unlock_rules/index.ts";
@@ -17,6 +18,8 @@ export interface Context {
   scenario: number[];
   /** Whether each world is unlocked in the save now (its UnlockedWorldId is not -1). */
   unlocked: boolean[];
+  /** How many "start of scenario" cutscene flags each world has in the save; without it the cutscene flags are left alone. */
+  startSlots?: number[];
 }
 
 export class ProgressPlanner {
@@ -24,8 +27,10 @@ export class ProgressPlanner {
   private readonly unlockRules: UnlockRules;
   private readonly odyssey: OdysseyRules;
   private readonly story: StoryRules;
+  private readonly cutscenes: CutsceneRules;
 
-  constructor(worlds: Worlds, unlockRules: UnlockRules, odyssey: OdysseyRules, story: StoryRules) {
+  constructor(worlds: Worlds, unlockRules: UnlockRules, odyssey: OdysseyRules, story: StoryRules, cutscenes: CutsceneRules) {
+    this.cutscenes = cutscenes;
     this.story = story;
     this.worlds = worlds;
     this.unlockRules = unlockRules;
@@ -69,6 +74,13 @@ export class ProgressPlanner {
         edits.push([`/WorldInfo/${world}/MainShineNo`, -1], [`/WorldInfo/${world}/ScenarioNo`, 1]);
       } else if (unlocked && world === cap && ctx.mainScenario[world] < 0) {
         edits.push([`/WorldInfo/${world}/MainShineNo`, 0]);
+      }
+      // A kingdom that is just unlocked, or whose Main or Current scenario this changes, gets its camera cutscene flags to match.
+      const slots = ctx.startSlots?.[world];
+      const main = justUnlocked && newest && world !== cap ? -1 : Math.max(ctx.mainScenario[world], left.has(world) ? doneMain ?? -1 : -1);
+      const scenario = justUnlocked && newest && world !== cap ? 1 : Math.max(ctx.scenario[world], left.has(world) ? doneScenario ?? 0 : 0);
+      if (slots !== undefined && unlocked && (justUnlocked || main !== ctx.mainScenario[world] || scenario !== ctx.scenario[world])) {
+        edits.push(...this.cutscenes.edits(world, main, slots));
       }
       edits.push(
         [`/GameProgressData/IsFirstTimeWorld/${world}`, !unlocked || notEntered],

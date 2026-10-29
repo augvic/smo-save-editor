@@ -2,7 +2,7 @@
 // next kingdom, the stage, and the first visit. A kingdom that is still locked is unlocked first.
 
 import type { StageCatalog, Worlds } from "../../game_data/index.ts";
-import type { UnlockRules } from "../../rules/index.ts";
+import type { CutsceneRules, UnlockRules } from "../../rules/index.ts";
 import type { Edit } from "../../save_schema/index.ts";
 import type { SaveStore } from "../../save_store/index.ts";
 import type { Toaster } from "../../toaster/index.ts";
@@ -15,6 +15,7 @@ export class GoToKingdom {
   private readonly unlockRules: UnlockRules;
   private readonly state: UnlockState;
   private readonly toaster: Toaster;
+  private readonly cutscenes: CutsceneRules;
 
   constructor(
     store: SaveStore,
@@ -23,7 +24,9 @@ export class GoToKingdom {
     unlockRules: UnlockRules,
     state: UnlockState,
     toaster: Toaster,
+    cutscenes: CutsceneRules,
   ) {
+    this.cutscenes = cutscenes;
     this.store = store;
     this.worlds = worlds;
     this.stages = stages;
@@ -52,6 +55,13 @@ export class GoToKingdom {
         : []),
       [`/GameProgressData/IsFirstTimeWorld/${world}`, false],
     ];
+    // Arriving in a kingdom for the first time plays its intro and the start of its scenario.
+    const slots = this.store.get<boolean[] | undefined>("progress", `/SequenceDemoSkipData/WorldData/${world}/IsFirstScenarioStartCamera`)?.length;
+    const main = this.store.get<number>("progress", `/WorldInfo/${world}/MainShineNo`);
+    if (slots !== undefined && (unlocking || main < 0)) {
+      const scenario = this.store.get<number>("progress", `/WorldInfo/${world}/ScenarioNo`);
+      edits.push(...this.cutscenes.edits(world, 0, slots), ...this.cutscenes.arrival(world, Math.max(1, scenario), slots));
+    }
     const stage = this.stages.homeStageOf(this.worlds.name(world));
     if (stage) edits.push(["/StageName", stage]);
 

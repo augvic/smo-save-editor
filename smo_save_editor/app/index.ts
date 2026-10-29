@@ -40,7 +40,7 @@ import {
   SummaryRow,
   VisitedStagesCard,
 } from "./pages/index.ts";
-import { OdysseyRules, ProgressPlanner, StoryRules, UnlockRules } from "./rules/index.ts";
+import { CutsceneRules, OdysseyRules, ProgressPlanner, StoryRules, UnlockRules } from "./rules/index.ts";
 import { SaveStore } from "./save_store/index.ts";
 import { Toaster } from "./toaster/index.ts";
 import { AutoFields } from "./widgets/index.ts";
@@ -68,7 +68,8 @@ const coinCatalog = new CoinCatalog();
 const unlockRules = new UnlockRules(worlds);
 const odysseyRules = new OdysseyRules(worlds);
 const storyRules = new StoryRules(scenarios, story);
-const planner = new ProgressPlanner(worlds, unlockRules, odysseyRules, storyRules);
+const cutsceneRules = new CutsceneRules();
+const planner = new ProgressPlanner(worlds, unlockRules, odysseyRules, storyRules, cutsceneRules);
 
 // Counting what the player has.
 const moons = new MoonLedger(store, moonCatalog, worlds);
@@ -86,7 +87,7 @@ const completion = new CompletionLedger({
 // What the editor does.
 const unlockState = new UnlockState(store, worlds, unlockRules, planner, moons);
 const fixMoonFlags = new FixMoonFlags(store, moons, toaster);
-const goToKingdom = new GoToKingdom(store, worlds, stages, unlockRules, unlockState, toaster);
+const goToKingdom = new GoToKingdom(store, worlds, stages, unlockRules, unlockState, toaster, cutsceneRules);
 const clearLockedCoins = new ClearLockedCoins(store, coins, purse, unlockRules, unlockState, toaster);
 const clearLockedShops = new ClearLockedShops(store, wardrobe, purse, worlds, unlockRules, unlockState, toaster);
 const setKingdomLock = new SetKingdomLock(unlockState, unlockRules, worlds, toaster, store, goToKingdom);
@@ -109,7 +110,7 @@ const kingdoms = new KingdomsPage({
   summaryRow: new SummaryRow(store, moons, coins, wardrobe, fixMoonFlags, clearLockedCoins, clearLockedShops),
   kingdomTile: new KingdomTile(worlds, coins, wardrobe, completion),
   groupTile: new GroupTile(),
-  kingdomProgress: new KingdomProgressCard(store, story, scenarios, storyRules, leaveCatalog, coins, purse),
+  kingdomProgress: new KingdomProgressCard(store, story, scenarios, storyRules, leaveCatalog, coins, purse, cutsceneRules),
   powerMoons: new PowerMoonsCard(store, moons, moonCatalog, scenarios),
   purpleCoins: new PurpleCoinsCard(store, coins, purse),
   shopSections: new ShopSections(store, wardrobe, shopCatalog, purse),
@@ -123,7 +124,7 @@ const pages = [
   new AchievementsPage(store, achievementCatalog, new CapturesCard(store, captureLedger), new MusicCard(store, musicCatalog, musicLedger), new RacesCard(store), new AchievementLedger(store, achievementCatalog, moonCatalog)),
   new ChecksPage(store, new SaveChecks({
     store, worlds, moons, moonCatalog, scenarios, odyssey: odysseyRules, unlockRules, unlockState,
-    coins, purse, achievements: achievementCatalog, leave: leaveCatalog, goTo: goToKingdom,
+    coins, purse, achievements: achievementCatalog, leave: leaveCatalog, goTo: goToKingdom, cutscenes: cutsceneRules,
   })),
   new StoryFlagsPage(store),
   new ReportPage(new MissingReport({

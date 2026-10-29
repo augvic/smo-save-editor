@@ -2,6 +2,7 @@
 //
 // A container: it only exposes its children.
 
+export { CutsceneRules } from "./cutscene_rules/index.ts";
 export { OdysseyRules, HOME_STATUS } from "./odyssey_rules/index.ts";
 export { ProgressPlanner } from "./progress_planner/index.ts";
 export type { Context } from "./progress_planner/index.ts";
