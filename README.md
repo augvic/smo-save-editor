@@ -13,7 +13,7 @@
   <img alt="Rust" src="https://img.shields.io/badge/Rust-backend-DEA584?logo=rust&logoColor=black">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-build-646CFF?logo=vite&logoColor=white">
-  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-20+-5FA04E?logo=nodedotjs&logoColor=white">
+  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-22+-5FA04E?logo=nodedotjs&logoColor=white">
   <img alt="Python tools" src="https://img.shields.io/badge/Python-tools-3776AB?logo=python&logoColor=white">
 </p>
 
@@ -149,7 +149,7 @@ The installers are not signed, so Windows may show a SmartScreen warning the fir
 
 You can also build the app on your own machine from a clone (the only way on macOS). 🔨
 
-1. **Install the tools:** [Rust](https://rustup.rs) (stable), [Node.js](https://nodejs.org) 20 or newer, and the
+1. **Install the tools:** [Rust](https://rustup.rs) (stable), [Node.js](https://nodejs.org) 22 or newer, and the
    [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your system:
    - 🐧 Linux: the WebKitGTK and GTK development packages (on Arch: `webkit2gtk-4.1`, `base-devel`; on Debian/Ubuntu: `libwebkit2gtk-4.1-dev`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`, `libxdo-dev`, `libssl-dev`)
    - 🪟 Windows: the Microsoft C++ Build Tools and WebView2 (already part of Windows 11)
